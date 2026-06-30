@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KIS Bridge Assistant Mode</title>
+<style>
+:root{color-scheme:dark;--bg:#0b1220;--card:#121a2b;--txt:#eef3f8;--muted:#9aa4b2;--ok:#2ea043;--bad:#f85149;--accent:#58a6ff}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--txt);font-family:system-ui,-apple-system,Segoe UI,sans-serif}main{max-width:900px;margin:auto;padding:18px}.card{background:var(--card);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:16px;margin:14px 0}h1{font-size:24px;margin:0 0 8px}button,input{border:0;border-radius:14px;padding:13px;font-size:16px}button{background:#30363d;color:white;font-weight:700}button.ok{background:var(--ok)}button.bad{background:var(--bad)}button.primary{background:var(--accent);color:#07111f}textarea{width:100%;min-height:340px;border-radius:14px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.04);color:var(--txt);padding:14px;font-size:16px;line-height:1.45}.row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:10px}.small{color:var(--muted);font-size:13px;line-height:1.35}.status{color:var(--muted);font-size:14px;margin-top:8px}label{display:block;color:var(--muted);font-size:13px;margin:8px 0 4px}input{width:100%;background:rgba(255,255,255,.04);color:var(--txt);border:1px solid rgba(255,255,255,.12)}
+</style>
+</head>
+<body>
+<main>
+<h1>📋 KIS Bridge · Assistant Mode</h1>
+<div class="small">Dieser Modus ist für: ChatGPT schreibt direkt per GitHub-Connector → Klinik-PC lädt hier → Kopieren → NEXUS.</div>
+<section class="card">
+<label>GitHub Token nur nötig, wenn das Repository privat ist</label>
+<input id="token" type="password" placeholder="github_pat_...">
+<div class="row"><button class="primary" id="load">📥 Laden</button><button class="ok" id="copy">📋 Kopieren</button><button class="bad" id="clearLocal">Leeren</button></div>
+<div class="status" id="status">Bereit</div>
+</section>
+<section class="card">
+<div class="small" id="meta">Noch kein Text geladen.</div>
+<textarea id="text" placeholder="Noch keine Payload geladen."></textarea>
+</section>
+</main>
+<script>
+const OWNER='broky99', REPO='transfer', BRANCH='main', PATH='data/assistant.json';
+const $=id=>document.getElementById(id);
+function status(t){$('status').textContent=t}
+function b64dec(b){return decodeURIComponent(escape(atob(b)))}
+function headers(){const h={'Accept':'application/vnd.github+json'};const tok=$('token').value.trim();if(tok)h.Authorization='Bearer '+tok;return h}
+async function load(){try{localStorage.setItem('kis_assistant_token',$('token').value.trim());status('Lade ...');const url=`https://api.github.com/repos/${OWNER}/${REPO}/contents/${PATH}?ref=${BRANCH}&t=${Date.now()}`;const r=await fetch(url,{headers:headers(),cache:'no-store'});if(r.status===404){status('Keine Payload gefunden');return}if(!r.ok)throw new Error('GitHub GET '+r.status+': '+await r.text());const f=await r.json();const p=JSON.parse(b64dec(f.content.replace(/\n/g,'')));$('text').value=p.text||'';$('meta').textContent=`${p.category||'Sonstiges'} · ${p.ts?new Date(p.ts).toLocaleString('de-DE'):''} · ${p.source||'assistant'}`;status('Geladen')}catch(e){status(e.message)}}
+async function copy(){const t=$('text').value;if(!t){status('Kein Text');return}await navigator.clipboard.writeText(t);status('Kopiert')}
+$('token').value=localStorage.getItem('kis_assistant_token')||'';$('load').onclick=load;$('copy').onclick=copy;$('clearLocal').onclick=()=>{$('text').value='';status('Lokal geleert')};setInterval(load,4000);load();
+</script>
+</body>
+</html>
