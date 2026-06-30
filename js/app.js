@@ -59,6 +59,30 @@
     ui.setStatus("GitHub erreichbar", "ok");
   }
 
+  function decodeBase64Url(value) {
+    var base64 = value.replace(/-/g, "+").replace(/_/g, "/");
+    while (base64.length % 4) {
+      base64 += "=";
+    }
+    return new TextDecoder().decode(Uint8Array.from(atob(base64), function (char) {
+      return char.charCodeAt(0);
+    }));
+  }
+
+  function handleSetupHash() {
+    if (!location.hash.startsWith("#setup=")) {
+      return false;
+    }
+
+    var encoded = location.hash.slice("#setup=".length);
+    var imported = JSON.parse(decodeBase64Url(encoded));
+    var saved = ui.saveSettings(imported);
+    ui.writeSettingsToForm(saved);
+    history.replaceState(null, "", location.pathname + location.search);
+    ui.setStatus("Einstellungen importiert", "ok");
+    return true;
+  }
+
   async function handleShortcutHash() {
     if (!location.hash.startsWith("#send=")) {
       return;
@@ -111,9 +135,13 @@
     ui.writeSettingsToForm(ui.loadSettings());
     ui.renderHistory();
     bindEvents();
-    run(handleShortcutHash);
+    if (!handleSetupHash()) {
+      run(handleShortcutHash);
+    }
     startPolling();
-    ui.setStatus("Live bereit", "ok");
+    if (!location.hash.startsWith("#setup=")) {
+      ui.setStatus("Live bereit", "ok");
+    }
   }
 
   init();
