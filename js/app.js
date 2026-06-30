@@ -96,6 +96,7 @@
     ui.get("clipSendBtn").addEventListener("click", function () { run(sendClipboard); });
     ui.get("checkNowBtn").addEventListener("click", function () { run(loadRemoteText); });
     ui.get("testBtn").addEventListener("click", function () { run(testConnection); });
+    window.KISBridge.files.bind();
     ui.get("clearHistoryBtn").addEventListener("click", function () {
       ui.clearHistory();
       ui.setStatus("Verlauf geleert", "ok");
