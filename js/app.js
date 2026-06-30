@@ -132,14 +132,16 @@
   }
 
   function init() {
+    var importedSettings;
     ui.writeSettingsToForm(ui.loadSettings());
     ui.renderHistory();
     bindEvents();
-    if (!handleSetupHash()) {
+    importedSettings = handleSetupHash();
+    if (!importedSettings) {
       run(handleShortcutHash);
     }
     startPolling();
-    if (!location.hash.startsWith("#setup=")) {
+    if (!importedSettings) {
       ui.setStatus("Live bereit", "ok");
     }
   }
