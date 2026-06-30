@@ -1,134 +1,123 @@
 <!doctype html>
 <html lang="de">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>KIS Bridge</title>
-<style>
-  :root { color-scheme: light dark; --bg:#0b1220; --card:#121a2b; --muted:#9aa4b2; --text:#eef3f8; --accent:#58a6ff; --ok:#2ea043; --bad:#f85149; --warn:#d29922; }
-  * { box-sizing: border-box; }
-  body { margin:0; font-family: system-ui, -apple-system, Segoe UI, sans-serif; background:var(--bg); color:var(--text); }
-  main { max-width: 980px; margin: 0 auto; padding: 18px; }
-  header { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:16px; }
-  h1 { font-size: 24px; margin:0; }
-  .status { font-size: 14px; color:var(--muted); white-space:nowrap; }
-  .dot { display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:6px; background:var(--warn); }
-  .dot.ok { background:var(--ok); } .dot.bad { background:var(--bad); }
-  .grid { display:grid; grid-template-columns: 1fr; gap:14px; }
-  @media (min-width: 860px) { .grid { grid-template-columns: 1.1fr .9fr; } }
-  .card { background:var(--card); border:1px solid rgba(255,255,255,.08); border-radius:16px; padding:14px; box-shadow:0 10px 30px rgba(0,0,0,.18); }
-  label { display:block; font-size:13px; color:var(--muted); margin: 8px 0 5px; }
-  input, textarea, select { width:100%; border:1px solid rgba(255,255,255,.12); background:rgba(255,255,255,.04); color:var(--text); border-radius:12px; padding:12px; font-size:16px; }
-  textarea { min-height: 260px; resize: vertical; line-height:1.4; }
-  button { border:0; border-radius:14px; padding:13px 14px; font-size:16px; font-weight:650; color:white; background:#30363d; cursor:pointer; }
-  button.primary { background:var(--accent); color:#07111f; }
-  button.ok { background:var(--ok); } button.bad { background:var(--bad); } button.warn { background:var(--warn); color:#171100; }
-  .buttons { display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap:10px; margin-top:12px; }
-  .buttons3 { display:grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap:10px; margin-top:12px; }
-  .small { font-size:13px; color:var(--muted); line-height:1.35; }
-  .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
-  .history { display:flex; flex-direction:column; gap:8px; max-height:330px; overflow:auto; }
-  .hist { text-align:left; padding:10px; border-radius:12px; background:rgba(255,255,255,.05); color:var(--text); font-weight:500; }
-  .hist span { display:block; color:var(--muted); font-size:12px; font-weight:400; margin-bottom:4px; }
-  details summary { cursor:pointer; color:var(--muted); }
-  .clipboardBox { margin-top:10px; padding:12px; border-radius:14px; border:1px solid rgba(88,166,255,.35); background:rgba(88,166,255,.08); }
-  .clipboardBox strong { display:block; margin-bottom:6px; }
-</style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>KIS Bridge</title>
+  <link rel="stylesheet" href="css/app.css">
+  <script defer src="js/github.js"></script>
+  <script defer src="js/clipboard.js"></script>
+  <script defer src="js/sync.js"></script>
+  <script defer src="js/ui.js"></script>
+  <script defer src="js/app.js"></script>
 </head>
 <body>
-<main>
-  <header>
-    <h1>📋 KIS Bridge</h1>
-    <div class="status"><span id="dot" class="dot"></span><span id="status">Bereit</span></div>
-  </header>
+  <main class="shell">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">KIS Bridge</p>
+        <h1>Texttransfer</h1>
+      </div>
+      <div class="status" aria-live="polite">
+        <span id="statusDot" class="status__dot"></span>
+        <span id="statusText">Bereit</span>
+      </div>
+    </header>
 
-  <div class="grid">
-    <section class="card">
-      <label>Kategorie</label>
-      <select id="category">
-        <option>Anamnese</option><option>Befund</option><option>Verlauf</option><option>Arztbrief</option><option>OP-Bericht</option><option>Sonstiges</option>
-      </select>
-      <label>Text</label>
-      <textarea id="text" placeholder="Text hier einfügen oder per iOS-Kurzbefehl senden..."></textarea>
-      <div class="clipboardBox">
-        <strong>📋 iPhone-Schnellweg</strong>
-        <div class="small">ChatGPT-Antwort kopieren → KIS Bridge öffnen → unten auf „Zwischenablage senden“.</div>
-        <div class="buttons"><button class="primary" id="clipSendBtn">📋 Zwischenablage senden</button><button id="clipLoadBtn">📥 Nur einfügen</button></div>
-      </div>
-      <div class="buttons3">
-        <button class="primary" id="sendBtn">📤 Senden</button>
-        <button class="ok" id="copyBtn">📋 Kopieren</button>
-        <button class="bad" id="clearBtn">🗑 Löschen</button>
-      </div>
-      <div class="buttons">
-        <button id="loadBtn">📥 Laden</button>
-        <button id="pasteBtn">📎 Einfügen</button>
-      </div>
-      <p class="small" id="lastInfo">Noch kein Diktat geladen.</p>
+    <section class="workspace" aria-label="Texttransfer">
+      <form id="transferForm" class="panel panel--editor">
+        <label class="field">
+          <span>Kategorie</span>
+          <select id="category" name="category">
+            <option>Anamnese</option>
+            <option>Befund</option>
+            <option>Verlauf</option>
+            <option>Arztbrief</option>
+            <option>OP-Bericht</option>
+            <option>Sonstiges</option>
+          </select>
+        </label>
+
+        <label class="field field--grow">
+          <span>Text</span>
+          <textarea id="text" name="text" placeholder="Text einfuegen oder per iPhone senden"></textarea>
+        </label>
+
+        <div class="quick-actions" aria-label="Zwischenablage">
+          <button id="clipSendBtn" class="button button--primary" type="button">Zwischenablage senden</button>
+          <button id="clipLoadBtn" class="button" type="button">Nur einfuegen</button>
+        </div>
+
+        <div class="actions actions--main">
+          <button id="sendBtn" class="button button--primary" type="submit">Senden</button>
+          <button id="copyBtn" class="button button--success" type="button">Kopieren</button>
+          <button id="clearBtn" class="button button--danger" type="button">Loeschen</button>
+        </div>
+
+        <div class="actions">
+          <button id="loadBtn" class="button" type="button">Laden</button>
+          <button id="pasteBtn" class="button" type="button">Einfuegen</button>
+          <button id="checkNowBtn" class="button button--accent" type="button">Jetzt pruefen</button>
+        </div>
+
+        <p id="lastInfo" class="meta">Noch kein Diktat geladen.</p>
+      </form>
+
+      <aside class="side">
+        <section class="panel">
+          <div class="section-head">
+            <h2>Verlauf</h2>
+            <button id="clearHistoryBtn" class="icon-button" type="button" title="Verlauf leeren">Leeren</button>
+          </div>
+          <div id="history" class="history"></div>
+        </section>
+
+        <section class="panel">
+          <details>
+            <summary>Einstellungen</summary>
+            <div class="settings-grid">
+              <label class="field">
+                <span>Owner</span>
+                <input id="owner" autocomplete="off" placeholder="broky99">
+              </label>
+              <label class="field">
+                <span>Repo</span>
+                <input id="repo" autocomplete="off" placeholder="transfer">
+              </label>
+              <label class="field">
+                <span>Branch</span>
+                <input id="branch" autocomplete="off" placeholder="main">
+              </label>
+              <label class="field">
+                <span>Pfad</span>
+                <input id="path" autocomplete="off" placeholder="data/payload.json">
+              </label>
+              <label class="field">
+                <span>GitHub Token</span>
+                <input id="token" type="password" autocomplete="off" placeholder="github_pat_...">
+              </label>
+              <label class="field">
+                <span>Passwort</span>
+                <input id="password" type="password" autocomplete="off" placeholder="lokales Passwort">
+              </label>
+            </div>
+            <div class="actions">
+              <button id="saveSettings" class="button button--success" type="button">Speichern</button>
+              <button id="testBtn" class="button" type="button">Test</button>
+            </div>
+          </details>
+        </section>
+
+        <section class="panel panel--future" aria-label="Vorbereitet">
+          <h2>Vorbereitet</h2>
+          <div class="future-grid">
+            <span>Queue</span>
+            <span>PDF</span>
+            <span>Bilder</span>
+          </div>
+        </section>
+      </aside>
     </section>
-
-    <aside class="card">
-      <h2 style="margin-top:0;font-size:18px">Verlauf</h2>
-      <div id="history" class="history"></div>
-      <hr style="border-color:rgba(255,255,255,.08)">
-      <details>
-        <summary>Einstellungen</summary>
-        <label>Owner</label><input id="owner" placeholder="broky99">
-        <label>Repo</label><input id="repo" placeholder="kis">
-        <label>Branch</label><input id="branch" placeholder="main">
-        <label>Pfad</label><input id="path" placeholder="data/payload.json">
-        <label>GitHub Token</label><input id="token" type="password" placeholder="github_pat_...">
-        <label>Passwort für Verschlüsselung</label><input id="password" type="password" placeholder="lokales Passwort">
-        <div class="buttons"><button id="saveSettings">💾 Speichern</button><button id="testBtn">🔌 Test</button></div>
-        <p class="small">Token und Passwort werden lokal im Browser gespeichert. Bei privatem Repository braucht jedes Gerät einen Token zum Lesen.</p>
-      </details>
-    </aside>
-  </div>
-</main>
-<script>
-const $ = id => document.getElementById(id);
-const defaults = { owner:'broky99', repo:'kis', branch:'main', path:'data/payload.json', token:'', password:'' };
-let settings = {...defaults, ...(JSON.parse(localStorage.getItem('kisBridgeSettings')||'{}'))};
-let lastPayloadId = null;
-let pollTimer = null;
-function setStatus(msg, kind='') { $('status').textContent = msg; $('dot').className = 'dot ' + kind; }
-function loadSettingsToForm(){ for (const k of Object.keys(defaults)) $(k).value = settings[k] || ''; }
-function readSettings(){ for (const k of Object.keys(defaults)) settings[k] = $(k).value.trim(); localStorage.setItem('kisBridgeSettings', JSON.stringify(settings)); }
-function apiUrl(){ return `https://api.github.com/repos/${settings.owner}/${settings.repo}/contents/${settings.path}`; }
-function headers(){ const h = { 'Accept':'application/vnd.github+json' }; if (settings.token) h.Authorization = `Bearer ${settings.token}`; return h; }
-function encUtf8(str){ return btoa(unescape(encodeURIComponent(str))); }
-function decUtf8(b64){ return decodeURIComponent(escape(atob(b64))); }
-async function keyFromPassword(salt){ const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(settings.password), 'PBKDF2', false, ['deriveKey']); return crypto.subtle.deriveKey({name:'PBKDF2', salt, iterations:120000, hash:'SHA-256'}, base, {name:'AES-GCM', length:256}, false, ['encrypt','decrypt']); }
-async function encryptObject(obj){ if(!settings.password) throw new Error('Passwort fehlt'); const salt=crypto.getRandomValues(new Uint8Array(16)); const iv=crypto.getRandomValues(new Uint8Array(12)); const key=await keyFromPassword(salt); const data=new TextEncoder().encode(JSON.stringify(obj)); const cipher=new Uint8Array(await crypto.subtle.encrypt({name:'AES-GCM', iv}, key, data)); return { v:2, salt:encUtf8(String.fromCharCode(...salt)), iv:encUtf8(String.fromCharCode(...iv)), cipher:encUtf8(String.fromCharCode(...cipher)) }; }
-async function decryptPayload(payload){ const salt=Uint8Array.from(decUtf8(payload.salt), c=>c.charCodeAt(0)); const iv=Uint8Array.from(decUtf8(payload.iv), c=>c.charCodeAt(0)); const cipher=Uint8Array.from(decUtf8(payload.cipher), c=>c.charCodeAt(0)); const key=await keyFromPassword(salt); const plain=await crypto.subtle.decrypt({name:'AES-GCM', iv}, key, cipher); return JSON.parse(new TextDecoder().decode(plain)); }
-async function fetchFile(){ const r=await fetch(apiUrl()+`?ref=${encodeURIComponent(settings.branch)}&t=${Date.now()}`, {headers:headers(), cache:'no-store'}); if(r.status===404) return null; if(!r.ok) throw new Error(`GitHub GET: ${r.status} ${await r.text()}`); return r.json(); }
-async function putFile(contentObj, message){ let current=null; try { current=await fetchFile(); } catch(e){ if(!String(e.message).includes('404')) throw e; }
- const body={ message, content: encUtf8(JSON.stringify(contentObj,null,2)), branch: settings.branch }; if(current?.sha) body.sha=current.sha;
- const r=await fetch(apiUrl(), {method:'PUT', headers:{...headers(),'Content-Type':'application/json'}, body:JSON.stringify(body)}); if(!r.ok) throw new Error(`GitHub PUT: ${r.status} ${await r.text()}`); return r.json(); }
-async function sendText(){ readSettings(); const text=$('text').value.trim(); if(!text) return setStatus('Kein Text', 'bad'); const obj={ id:crypto.randomUUID(), ts:new Date().toISOString(), category:$('category').value, text, history: [] };
- const encrypted=await encryptObject(obj); await putFile(encrypted, 'KIS Bridge: payload update'); lastPayloadId=obj.id; addHistory(obj); setStatus('Gesendet', 'ok'); }
-async function loadText(silent=false){ readSettings(); const f=await fetchFile(); if(!f){ if(!silent) setStatus('Keine Payload gefunden','bad'); return; } let payload; try{ payload=JSON.parse(decUtf8(f.content.replace(/\n/g,''))); }catch{ if(!silent) setStatus('Payload nicht lesbar','bad'); return; }
- if(!payload?.cipher){ if(!silent) setStatus('Keine gespeicherte Payload gefunden','bad'); return; }
- const obj=await decryptPayload(payload); if(obj.id && obj.id===lastPayloadId && silent) return;
- lastPayloadId=obj.id; $('text').value=obj.text || ''; $('category').value=obj.category || 'Sonstiges'; $('lastInfo').textContent=`Geladen: ${new Date(obj.ts).toLocaleString()} · ${obj.category||''}`; addHistory(obj); setStatus('Neues Diktat geladen','ok'); }
-async function clearRemote(){ readSettings(); await putFile({v:2, empty:true, ts:new Date().toISOString()}, 'KIS Bridge: clear payload'); $('text').value=''; setStatus('Gelöscht','ok'); }
-async function copyText(){ const t=$('text').value; if(!t) return setStatus('Kein Text zum Kopieren','bad'); await navigator.clipboard.writeText(t); setStatus('Kopiert','ok'); await clearRemote().catch(()=>{}); }
-async function readClipboardIntoText(){ try{ const t=await navigator.clipboard.readText(); if(!t.trim()) { setStatus('Zwischenablage leer','bad'); return false; } $('text').value=t; setStatus('Zwischenablage eingefügt','ok'); return true; }catch(e){ setStatus('Zwischenablage nicht erlaubt: erst Button antippen','bad'); return false; } }
-async function sendClipboard(){ const ok=await readClipboardIntoText(); if(ok) await sendText(); }
-function addHistory(obj){ let hist=JSON.parse(localStorage.getItem('kisBridgeHistory')||'[]'); if(!hist.find(x=>x.id===obj.id)) hist.unshift({id:obj.id, ts:obj.ts, category:obj.category, text:obj.text}); hist=hist.slice(0,20); localStorage.setItem('kisBridgeHistory', JSON.stringify(hist)); renderHistory(); }
-function renderHistory(){ const hist=JSON.parse(localStorage.getItem('kisBridgeHistory')||'[]'); $('history').innerHTML=hist.length?'':'<p class="small">Noch kein Verlauf.</p>'; for(const item of hist){ const b=document.createElement('button'); b.className='hist'; b.innerHTML=`<span>${new Date(item.ts).toLocaleString()} · ${item.category}</span>${(item.text||'').slice(0,120).replace(/[<>&]/g,s=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[s]))}`; b.onclick=()=>{ $('text').value=item.text; $('category').value=item.category||'Sonstiges'; setStatus('Aus Verlauf geladen','ok'); }; $('history').appendChild(b); } }
-async function handleShortcutHash(){ const h=location.hash; if(!h.startsWith('#send=')) return; try{ const params=new URLSearchParams(h.slice(1)); const text=params.get('send')||''; const cat=params.get('cat')||'Sonstiges'; $('text').value=text; $('category').value=cat; history.replaceState(null,'',location.pathname+location.search); await sendText(); }catch(e){ setStatus(e.message,'bad'); }}
-function startPolling(){ if(pollTimer) clearInterval(pollTimer); pollTimer=setInterval(()=>loadText(true).catch(()=>{}), 2500); }
-$('saveSettings').onclick=()=>{ readSettings(); setStatus('Einstellungen gespeichert','ok'); };
-$('sendBtn').onclick=()=>sendText().catch(e=>setStatus(e.message,'bad'));
-$('loadBtn').onclick=()=>loadText().catch(e=>setStatus(e.message,'bad'));
-$('copyBtn').onclick=()=>copyText().catch(e=>setStatus(e.message,'bad'));
-$('clearBtn').onclick=()=>clearRemote().catch(e=>setStatus(e.message,'bad'));
-$('pasteBtn').onclick=()=>readClipboardIntoText();
-$('clipLoadBtn').onclick=()=>readClipboardIntoText();
-$('clipSendBtn').onclick=()=>sendClipboard().catch(e=>setStatus(e.message,'bad'));
-$('testBtn').onclick=()=>fetchFile().then(()=>setStatus('GitHub erreichbar','ok')).catch(e=>setStatus(e.message,'bad'));
-loadSettingsToForm(); renderHistory(); handleShortcutHash(); startPolling(); setStatus('Live bereit','ok');
-</script>
+  </main>
 </body>
 </html>
