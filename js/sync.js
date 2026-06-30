@@ -76,6 +76,39 @@
     return JSON.parse(new TextDecoder().decode(plain));
   }
 
+  async function encryptFile(settings, fileMeta, bytes) {
+    if (!settings.password) {
+      throw new Error("Passwort fehlt");
+    }
+
+    var salt = crypto.getRandomValues(new Uint8Array(16));
+    var iv = crypto.getRandomValues(new Uint8Array(12));
+    var key = await keyFromPassword(settings.password, salt);
+    var cipher = new Uint8Array(await crypto.subtle.encrypt({ name: "AES-GCM", iv: iv }, key, bytes));
+
+    return {
+      v: 2,
+      type: "file",
+      file: fileMeta,
+      salt: bytesToBase64(salt),
+      iv: bytesToBase64(iv),
+      cipher: bytesToBase64(cipher)
+    };
+  }
+
+  async function decryptFile(settings, payload) {
+    var salt = base64ToBytes(payload.salt);
+    var iv = base64ToBytes(payload.iv);
+    var cipher = base64ToBytes(payload.cipher);
+    var key = await keyFromPassword(settings.password, salt);
+    var plain = await crypto.subtle.decrypt({ name: "AES-GCM", iv: iv }, key, cipher);
+
+    return {
+      file: payload.file || {},
+      bytes: new Uint8Array(plain)
+    };
+  }
+
   async function sendText(settings, category, text) {
     var trimmedText = text.trim();
     if (!trimmedText) {
@@ -154,6 +187,8 @@
     inactiveIntervalMs: inactiveIntervalMs,
     toBase64: toBase64,
     fromBase64: fromBase64,
+    encryptFile: encryptFile,
+    decryptFile: decryptFile,
     sendText: sendText,
     loadText: loadText,
     clearRemote: clearRemote,
