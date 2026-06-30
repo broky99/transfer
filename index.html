@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>KIS Bridge</title>
+<style>
+:root{--bg:#0b1020;--card:#121a31;--muted:#9aa7bd;--text:#eef4ff;--line:#26314d;--accent:#5cc8ff;--danger:#ff6b6b;--ok:#6ee7a8}*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;background:linear-gradient(180deg,#0b1020,#111827);color:var(--text)}main{max-width:980px;margin:auto;padding:16px}.top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}.brand{font-weight:800;font-size:22px}.pill{font-size:12px;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:5px 9px}.grid{display:grid;grid-template-columns:1fr;gap:12px}@media(min-width:850px){.grid{grid-template-columns:380px 1fr}}.card{background:rgba(18,26,49,.92);border:1px solid var(--line);border-radius:18px;padding:14px;box-shadow:0 12px 30px rgba(0,0,0,.22)}label{display:block;font-size:12px;color:var(--muted);margin:10px 0 5px}input,textarea,select{width:100%;background:#0d1428;color:var(--text);border:1px solid var(--line);border-radius:12px;padding:11px;font-size:15px}textarea{min-height:260px;resize:vertical;line-height:1.35}.row{display:flex;gap:8px;align-items:center}.row>*{flex:1}button{border:0;border-radius:12px;padding:12px 14px;font-weight:700;background:#24324f;color:var(--text);cursor:pointer}button.primary{background:var(--accent);color:#001526}button.ok{background:var(--ok);color:#052014}button.danger{background:var(--danger);color:#240707}button:disabled{opacity:.55;cursor:not-allowed}.small{font-size:12px;color:var(--muted);line-height:1.35}.status{min-height:22px;margin-top:10px;color:var(--muted);font-size:13px}.status.ok{color:var(--ok)}.status.err{color:var(--danger)}.item{border:1px solid var(--line);border-radius:14px;padding:10px;margin:8px 0;background:#0d1428}.item.active{outline:2px solid var(--accent)}.itemhead{display:flex;justify-content:space-between;gap:8px;color:var(--muted);font-size:12px;margin-bottom:6px}.preview{white-space:pre-wrap;max-height:120px;overflow:auto;font-size:14px}.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}.tab{padding:7px 10px;border-radius:999px;border:1px solid var(--line);color:var(--muted);font-size:13px}.tab.active{background:#20304d;color:var(--text);border-color:#44628f}.hidden{display:none}.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}.checkbox{display:flex;gap:8px;align-items:center;color:var(--muted);font-size:13px}.checkbox input{width:auto}</style>
+</head>
+<body>
+<main>
+  <div class="top"><div><div class="brand">KIS Bridge</div><div class="small">ChatGPT → GitHub → NEXUS · verschlüsselt im Browser</div></div><div class="pill" id="modePill">bereit</div></div>
+  <div class="grid">
+    <section class="card">
+      <h3>⚙️ Verbindung</h3>
+      <label>Owner</label><input id="owner" placeholder="broky99">
+      <label>Repository</label><input id="repo" placeholder="kis">
+      <div class="row"><div><label>Branch</label><input id="branch" value="main"></div><div><label>Datei</label><input id="path" value="data/payload.json"></div></div>
+      <label>GitHub Token <span class="small">bei privatem Repo auch am Klinik-PC nötig</span></label><input id="token" type="password" placeholder="github_pat_...">
+      <label>Passwort für Verschlüsselung</label><input id="pass" type="password" placeholder="gleich auf iPhone und PC">
+      <div class="row" style="margin-top:10px"><button id="saveSettings">Speichern</button><button id="testBtn">Test/Laden</button></div>
+      <div class="status" id="status"></div>
+      <p class="small">Token und Passwort werden nur lokal im Browser gespeichert. GitHub erhält nur den verschlüsselten Inhalt.</p>
+    </section>
+
+    <section class="card">
+      <div class="tabs" id="tabs"></div>
+      <label>Neuer Text</label>
+      <textarea id="text" placeholder="Hier ChatGPT-Text einfügen oder per iOS-Kurzbefehl senden …"></textarea>
+      <div class="row"><select id="type"><option>Anamnese</option><option>Befund</option><option>Verlauf</option><option>Arztbrief</option><option>OP-Bericht</option><option>Sonstiges</option></select><button class="primary" id="sendBtn">📤 Senden</button></div>
+      <div class="row" style="margin-top:8px"><button id="pasteBtn">📥 Einfügen</button><button id="clearBtn">Leeren</button><button id="refreshBtn">🔄 Laden</button></div>
+    </section>
+  </div>
+
+  <section class="card" style="margin-top:12px">
+    <div class="row"><h3 style="margin:0;flex:2">📚 Letzte Diktate</h3><button id="copyBtn" class="ok">📋 Kopieren</button><button id="deleteBtn" class="danger">🗑 Löschen</button></div>
+    <label class="checkbox"><input type="checkbox" id="autoDelete" checked> Nach Kopieren automatisch löschen</label>
+    <div id="list" style="margin-top:10px"></div>
+  </section>
+</main>
+<script>
+const $=id=>document.getElementById(id);let state={items:[],selected:null,sha:null};const cats=['Alle','Anamnese','Befund','Verlauf','Arztbrief','OP-Bericht','Sonstiges'];let activeCat='Alle';
+function setStatus(t,cls=''){const s=$('status');s.textContent=t;s.className='status '+cls;$('modePill').textContent=t||'bereit'}
+function loadSettings(){['owner','repo','branch','path','token','pass'].forEach(k=>$(k).value=localStorage.getItem('kis_'+k)||($(k).value||''));$('autoDelete').checked=(localStorage.getItem('kis_autoDelete')??'1')==='1'}
+function saveSettings(){['owner','repo','branch','path','token','pass'].forEach(k=>localStorage.setItem('kis_'+k,$(k).value.trim()));localStorage.setItem('kis_autoDelete',$('autoDelete').checked?'1':'0');setStatus('Einstellungen gespeichert','ok')}
+function cfg(){return{owner:$('owner').value.trim(),repo:$('repo').value.trim(),branch:$('branch').value.trim()||'main',path:$('path').value.trim()||'data/payload.json',token:$('token').value.trim(),pass:$('pass').value}}
+function b64enc(str){return btoa(unescape(encodeURIComponent(str)))}function b64dec(b){return decodeURIComponent(escape(atob(b)))}
+async function keyFromPass(pass,salt){const enc=new TextEncoder();const base=await crypto.subtle.importKey('raw',enc.encode(pass),'PBKDF2',false,['deriveKey']);return crypto.subtle.deriveKey({name:'PBKDF2',salt,iterations:150000,hash:'SHA-256'},base,{name:'AES-GCM',length:256},false,['encrypt','decrypt'])}
+async function encrypt(obj,pass){const enc=new TextEncoder();const salt=crypto.getRandomValues(new Uint8Array(16));const iv=crypto.getRandomValues(new Uint8Array(12));const key=await keyFromPass(pass,salt);const ct=await crypto.subtle.encrypt({name:'AES-GCM',iv},key,enc.encode(JSON.stringify(obj)));return{salt:btoa(String.fromCharCode(...salt)),iv:btoa(String.fromCharCode(...iv)),ct:btoa(String.fromCharCode(...new Uint8Array(ct)))}}
+async function decrypt(payload,pass){const bin=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));const key=await keyFromPass(pass,bin(payload.salt));const pt=await crypto.subtle.decrypt({name:'AES-GCM',iv:bin(payload.iv)},key,bin(payload.ct));return JSON.parse(new TextDecoder().decode(pt))}
+async function ghGet(){const c=cfg();if(!c.owner||!c.repo)throw Error('Owner/Repo fehlt');const url=`https://api.github.com/repos/${c.owner}/${c.repo}/contents/${encodeURIComponent(c.path).replaceAll('%2F','/')}?ref=${encodeURIComponent(c.branch)}`;const h={'Accept':'application/vnd.github+json'};if(c.token)h.Authorization='Bearer '+c.token;const r=await fetch(url,{headers:h});if(r.status===404)return null;if(!r.ok)throw Error('GitHub GET: '+r.status+' '+await r.text());return await r.json()}
+async function ghPut(obj,msg){const c=cfg();if(!c.token)throw Error('Token fehlt zum Schreiben');const old=await ghGet();const url=`https://api.github.com/repos/${c.owner}/${c.repo}/contents/${encodeURIComponent(c.path).replaceAll('%2F','/')}`;const body={message:msg,content:b64enc(JSON.stringify(obj,null,2)),branch:c.branch};if(old&&old.sha)body.sha=old.sha;const r=await fetch(url,{method:'PUT',headers:{'Accept':'application/vnd.github+json','Authorization':'Bearer '+c.token,'Content-Type':'application/json'},body:JSON.stringify(body)});if(!r.ok)throw Error('GitHub PUT: '+r.status+' '+await r.text());return await r.json()}
+async function loadRemote(){saveSettings();const c=cfg();if(!c.pass)throw Error('Passwort fehlt');setStatus('Lade …');const f=await ghGet();if(!f){state={items:[],selected:null,sha:null};render();setStatus('Keine gespeicherte Payload gefunden');return state}const raw=JSON.parse(b64dec(f.content.replace(/\n/g,'')));const data=await decrypt(raw.payload,c.pass);state.items=data.items||[];state.selected=state.items[0]?.id||null;state.sha=f.sha;render();setStatus(state.items.length?('Geladen: '+state.items.length+' Einträge'):'Leer','ok');return state}
+async function saveRemote(items,msg='KIS Bridge update'){const c=cfg();if(!c.pass)throw Error('Passwort fehlt');const payload=await encrypt({items},c.pass);await ghPut({version:2,updatedAt:new Date().toISOString(),payload},msg);state.items=items;state.selected=items[0]?.id||null;render();}
+async function sendText(){try{saveSettings();let text=$('text').value.trim();if(!text){setStatus('Kein Text','err');return}const item={id:String(Date.now()),ts:new Date().toISOString(),type:$('type').value,text};let cur=[];try{const st=await loadRemote();cur=st.items||[]}catch(e){cur=[]}cur=[item,...cur].slice(0,20);setStatus('Sende …');await saveRemote(cur,'KIS Bridge: send payload');$('text').value='';setStatus('Gesendet. Am Klinik-PC laden/aktualisieren.','ok')}catch(e){setStatus(e.message,'err')}}
+async function deleteSelected(){try{const id=state.selected;if(!id)return;await saveRemote(state.items.filter(x=>x.id!==id),'KIS Bridge: delete payload');setStatus('Gelöscht','ok')}catch(e){setStatus(e.message,'err')}}
+async function copySelected(){const it=state.items.find(x=>x.id===state.selected);if(!it){setStatus('Nichts ausgewählt','err');return}await navigator.clipboard.writeText(it.text);setStatus('Kopiert','ok');if($('autoDelete').checked)await deleteSelected()}
+function renderTabs(){const el=$('tabs');el.innerHTML='';cats.forEach(c=>{const d=document.createElement('button');d.className='tab '+(activeCat===c?'active':'');d.textContent=c;d.onclick=()=>{activeCat=c;render()};el.appendChild(d)})}
+function render(){renderTabs();const list=$('list');list.innerHTML='';let arr=state.items.filter(x=>activeCat==='Alle'||x.type===activeCat);if(!arr.length){list.innerHTML='<div class="small">Keine Diktate geladen.</div>';return}arr.forEach(it=>{const div=document.createElement('div');div.className='item '+(it.id===state.selected?'active':'');div.onclick=()=>{state.selected=it.id;render()};div.innerHTML=`<div class="itemhead"><b>${it.type}</b><span>${new Date(it.ts).toLocaleString('de-DE')}</span></div><div class="preview"></div>`;div.querySelector('.preview').textContent=it.text;list.appendChild(div)})}
+async function pasteClip(){try{$('text').value=await navigator.clipboard.readText();setStatus('Zwischenablage eingefügt','ok')}catch(e){setStatus('Einfügen nicht erlaubt','err')}}
+function importFromHash(){const h=location.hash||'';if(h.startsWith('#send=')){try{const txt=decodeURIComponent(h.slice(6));$('text').value=txt;setTimeout(sendText,300);history.replaceState(null,'',location.pathname+location.search)}catch(e){setStatus('Import-Fehler: '+e.message,'err')}}}
+$('saveSettings').onclick=saveSettings;$('testBtn').onclick=()=>loadRemote().catch(e=>setStatus(e.message,'err'));$('sendBtn').onclick=sendText;$('refreshBtn').onclick=()=>loadRemote().catch(e=>setStatus(e.message,'err'));$('copyBtn').onclick=copySelected;$('deleteBtn').onclick=deleteSelected;$('pasteBtn').onclick=pasteClip;$('clearBtn').onclick=()=>{$('text').value=''};$('autoDelete').onchange=saveSettings;
+loadSettings();render();importFromHash();setInterval(()=>{if(document.visibilityState==='visible'&&localStorage.getItem('kis_autorefresh')!=='0')loadRemote().catch(()=>{})},15000);
+</script>
+</body></html>
