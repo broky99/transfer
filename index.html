@@ -31,6 +31,8 @@
   .hist { text-align:left; padding:10px; border-radius:12px; background:rgba(255,255,255,.05); color:var(--text); font-weight:500; }
   .hist span { display:block; color:var(--muted); font-size:12px; font-weight:400; margin-bottom:4px; }
   details summary { cursor:pointer; color:var(--muted); }
+  .clipboardBox { margin-top:10px; padding:12px; border-radius:14px; border:1px solid rgba(88,166,255,.35); background:rgba(88,166,255,.08); }
+  .clipboardBox strong { display:block; margin-bottom:6px; }
 </style>
 </head>
 <body>
@@ -48,6 +50,11 @@
       </select>
       <label>Text</label>
       <textarea id="text" placeholder="Text hier einfügen oder per iOS-Kurzbefehl senden..."></textarea>
+      <div class="clipboardBox">
+        <strong>📋 iPhone-Schnellweg</strong>
+        <div class="small">ChatGPT-Antwort kopieren → KIS Bridge öffnen → unten auf „Zwischenablage senden“.</div>
+        <div class="buttons"><button class="primary" id="clipSendBtn">📋 Zwischenablage senden</button><button id="clipLoadBtn">📥 Nur einfügen</button></div>
+      </div>
       <div class="buttons3">
         <button class="primary" id="sendBtn">📤 Senden</button>
         <button class="ok" id="copyBtn">📋 Kopieren</button>
@@ -106,6 +113,8 @@ async function loadText(silent=false){ readSettings(); const f=await fetchFile()
  lastPayloadId=obj.id; $('text').value=obj.text || ''; $('category').value=obj.category || 'Sonstiges'; $('lastInfo').textContent=`Geladen: ${new Date(obj.ts).toLocaleString()} · ${obj.category||''}`; addHistory(obj); setStatus('Neues Diktat geladen','ok'); }
 async function clearRemote(){ readSettings(); await putFile({v:2, empty:true, ts:new Date().toISOString()}, 'KIS Bridge: clear payload'); $('text').value=''; setStatus('Gelöscht','ok'); }
 async function copyText(){ const t=$('text').value; if(!t) return setStatus('Kein Text zum Kopieren','bad'); await navigator.clipboard.writeText(t); setStatus('Kopiert','ok'); await clearRemote().catch(()=>{}); }
+async function readClipboardIntoText(){ try{ const t=await navigator.clipboard.readText(); if(!t.trim()) { setStatus('Zwischenablage leer','bad'); return false; } $('text').value=t; setStatus('Zwischenablage eingefügt','ok'); return true; }catch(e){ setStatus('Zwischenablage nicht erlaubt: erst Button antippen','bad'); return false; } }
+async function sendClipboard(){ const ok=await readClipboardIntoText(); if(ok) await sendText(); }
 function addHistory(obj){ let hist=JSON.parse(localStorage.getItem('kisBridgeHistory')||'[]'); if(!hist.find(x=>x.id===obj.id)) hist.unshift({id:obj.id, ts:obj.ts, category:obj.category, text:obj.text}); hist=hist.slice(0,20); localStorage.setItem('kisBridgeHistory', JSON.stringify(hist)); renderHistory(); }
 function renderHistory(){ const hist=JSON.parse(localStorage.getItem('kisBridgeHistory')||'[]'); $('history').innerHTML=hist.length?'':'<p class="small">Noch kein Verlauf.</p>'; for(const item of hist){ const b=document.createElement('button'); b.className='hist'; b.innerHTML=`<span>${new Date(item.ts).toLocaleString()} · ${item.category}</span>${(item.text||'').slice(0,120).replace(/[<>&]/g,s=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[s]))}`; b.onclick=()=>{ $('text').value=item.text; $('category').value=item.category||'Sonstiges'; setStatus('Aus Verlauf geladen','ok'); }; $('history').appendChild(b); } }
 async function handleShortcutHash(){ const h=location.hash; if(!h.startsWith('#send=')) return; try{ const params=new URLSearchParams(h.slice(1)); const text=params.get('send')||''; const cat=params.get('cat')||'Sonstiges'; $('text').value=text; $('category').value=cat; history.replaceState(null,'',location.pathname+location.search); await sendText(); }catch(e){ setStatus(e.message,'bad'); }}
@@ -115,7 +124,9 @@ $('sendBtn').onclick=()=>sendText().catch(e=>setStatus(e.message,'bad'));
 $('loadBtn').onclick=()=>loadText().catch(e=>setStatus(e.message,'bad'));
 $('copyBtn').onclick=()=>copyText().catch(e=>setStatus(e.message,'bad'));
 $('clearBtn').onclick=()=>clearRemote().catch(e=>setStatus(e.message,'bad'));
-$('pasteBtn').onclick=async()=>{ try{$('text').value=await navigator.clipboard.readText(); setStatus('Eingefügt','ok');}catch(e){setStatus('Einfügen nicht erlaubt','bad');} };
+$('pasteBtn').onclick=()=>readClipboardIntoText();
+$('clipLoadBtn').onclick=()=>readClipboardIntoText();
+$('clipSendBtn').onclick=()=>sendClipboard().catch(e=>setStatus(e.message,'bad'));
 $('testBtn').onclick=()=>fetchFile().then(()=>setStatus('GitHub erreichbar','ok')).catch(e=>setStatus(e.message,'bad'));
 loadSettingsToForm(); renderHistory(); handleShortcutHash(); startPolling(); setStatus('Live bereit','ok');
 </script>
