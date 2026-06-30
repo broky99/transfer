@@ -1,0 +1,14 @@
+{
+  "manifest_version": 3,
+  "name": "KIS Bridge Sender",
+  "version": "1.0.0",
+  "description": "Sendet markierten Text direkt an KIS Bridge.",
+  "permissions": ["contextMenus", "tabs"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "icons": {},
+  "action": {
+    "default_title": "KIS Bridge"
+  }
+}
