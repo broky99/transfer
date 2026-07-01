@@ -59,14 +59,14 @@ Die Live-Aktualisierung prueft bei aktivem Fenster alle 10 Sekunden. Im Hintergr
 
 ## Dateiaustausch
 
-Unter **Datei** kann eine einzelne Datei verschluesselt nach GitHub uebertragen werden.
+Unter **Datei** kann eine einzelne Datei nach GitHub uebertragen werden.
 
 1. Auf dem sendenden Geraet Datei auswaehlen.
 2. **Datei senden** antippen.
 3. Auf dem empfangenden Geraet **Pruefen** antippen.
 4. Wenn die Datei geladen ist, **Herunterladen** antippen.
 
-Die Datei wird in `data/file.json` gespeichert und mit demselben Passwort wie der Texttransfer verschluesselt. Fuer den schnellen Austausch ist die Dateigroesse auf 3 MB begrenzt.
+Die Datei wird unverschluesselt als Base64-Payload in `data/file.json` gespeichert. Fuer den schnellen Austausch ist die Dateigroesse auf 3 MB begrenzt.
 
 ## iOS-Kurzbefehl
 
@@ -115,4 +115,4 @@ Nicht implementiert, aber vorbereitet: Queue, PDF und Bilder. Diese Bereiche sol
 
 ## Datenschutz
 
-Keine Patientennamen, Geburtsdaten, Fallnummern oder andere direkt identifizierende Daten uebertragen. GitHub speichert nur verschluesselten Inhalt, trotzdem bleiben organisatorische Datenschutzvorgaben massgeblich.
+Keine Patientennamen, Geburtsdaten, Fallnummern oder andere direkt identifizierende Daten uebertragen. GitHub speichert Textinhalte verschluesselt; Dateien in `data/file.json` sind unverschluesselt und sollten nur unkritische Inhalte enthalten.
