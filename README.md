@@ -7,6 +7,7 @@ KIS Bridge ist eine statische Webanwendung fuer den schnellen Transfer medizinis
 - GitHub-Transfer ueber `data/payload.json`
 - AES-GCM-Verschluesselung im Browser
 - Zwischenablage lesen und schreiben
+- Dateiaustausch ueber `data/file.json`
 - Live-Aktualisierung mit Polling
 - Lokale Historie im Browser
 - Dark Mode, grosse Buttons, optimiert fuer Mobile und Desktop
@@ -56,6 +57,17 @@ Bei einem privaten Repository braucht jedes Geraet einen Token zum Lesen und Sch
 
 Die Live-Aktualisierung prueft bei aktivem Fenster alle 10 Sekunden. Im Hintergrund wird alle 60 Sekunden geprueft. Mit **Jetzt pruefen** kann jederzeit manuell geladen werden.
 
+## Dateiaustausch
+
+Unter **Datei** kann eine einzelne Datei nach GitHub uebertragen werden.
+
+1. Auf dem sendenden Geraet Datei auswaehlen.
+2. **Datei senden** antippen.
+3. Auf dem empfangenden Geraet **Pruefen** antippen.
+4. Wenn die Datei geladen ist, **Herunterladen** antippen.
+
+Die Datei wird unverschluesselt als Base64-Payload in `data/file.json` gespeichert. Fuer den schnellen Austausch ist die Dateigroesse auf 3 MB begrenzt.
+
 ## iOS-Kurzbefehl
 
 Optional kann ein Kurzbefehl `An KIS senden` angelegt werden:
@@ -83,6 +95,7 @@ js/
   app.js
   github.js
   clipboard.js
+  files.js
   sync.js
   ui.js
 data/
@@ -102,4 +115,4 @@ Nicht implementiert, aber vorbereitet: Queue, PDF und Bilder. Diese Bereiche sol
 
 ## Datenschutz
 
-Keine Patientennamen, Geburtsdaten, Fallnummern oder andere direkt identifizierende Daten uebertragen. GitHub speichert nur verschluesselten Inhalt, trotzdem bleiben organisatorische Datenschutzvorgaben massgeblich.
+Keine Patientennamen, Geburtsdaten, Fallnummern oder andere direkt identifizierende Daten uebertragen. GitHub speichert Textinhalte verschluesselt; Dateien in `data/file.json` sind unverschluesselt und sollten nur unkritische Inhalte enthalten.
