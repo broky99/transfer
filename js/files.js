@@ -19,6 +19,23 @@
     return (bytes / 1024 / 1024).toFixed(1) + " MB";
   }
 
+  function bytesToBase64(bytes) {
+    var binary = "";
+    for (var i = 0; i < bytes.length; i += 1) {
+      binary += String.fromCharCode(bytes[i]);
+    }
+    return btoa(binary);
+  }
+
+  function base64ToBytes(value) {
+    var binary = atob(value);
+    var bytes = new Uint8Array(binary.length);
+    for (var i = 0; i < binary.length; i += 1) {
+      bytes[i] = binary.charCodeAt(i);
+    }
+    return bytes;
+  }
+
   function fileSettings() {
     return window.KISBridge.ui.readSettingsFromForm();
   }
@@ -41,15 +58,20 @@
 
     var settings = fileSettings();
     var bytes = new Uint8Array(await file.arrayBuffer());
-    var encrypted = await window.KISBridge.sync.encryptFile(settings, {
-      id: crypto.randomUUID(),
-      name: file.name,
-      mime: file.type || "application/octet-stream",
-      size: file.size,
-      ts: new Date().toISOString()
-    }, bytes);
+    var payload = {
+      v: 1,
+      type: "file",
+      file: {
+        id: crypto.randomUUID(),
+        name: file.name,
+        mime: file.type || "application/octet-stream",
+        size: file.size,
+        ts: new Date().toISOString()
+      },
+      content: bytesToBase64(bytes)
+    };
 
-    await window.KISBridge.github.putPath(settings, remoteFilePath, encrypted, "KIS Bridge: file update");
+    await window.KISBridge.github.putPath(settings, remoteFilePath, payload, "KIS Bridge: file update");
     currentDownload = null;
     get("downloadFileBtn").disabled = true;
     setFileInfo("Gesendet: " + file.name + " · " + formatSize(file.size));
@@ -65,11 +87,14 @@
     }
 
     var payload = JSON.parse(window.KISBridge.sync.fromBase64(remote.content.replace(/\n/g, "")));
-    if (!payload || payload.type !== "file" || !payload.cipher) {
+    if (!payload || payload.type !== "file" || !payload.content) {
       throw new Error("Datei nicht lesbar");
     }
 
-    currentDownload = await window.KISBridge.sync.decryptFile(settings, payload);
+    currentDownload = {
+      file: payload.file || {},
+      bytes: base64ToBytes(payload.content)
+    };
     get("downloadFileBtn").disabled = false;
     setFileInfo("Geladen: " + currentDownload.file.name + " · " +
       formatSize(currentDownload.file.size || currentDownload.bytes.length));
