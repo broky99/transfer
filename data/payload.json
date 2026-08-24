@@ -1,5 +1,6 @@
 {
   "v": 2,
-  "empty": true,
-  "ts": "2026-07-19T18:42:05.632Z"
+  "salt": "zNJKSqoyPk94fIjFRv6A+A==",
+  "iv": "uXxL7ob63EUOzuY5",
+  "cipher": "05nHFrtzKpj4U5qYRCF1Zl2v5TxRbGGhcpkIsAF4BH+BwkqDXHbHKyYw7ZYj7CBS2PO3rR/DefiG3imx8ahQI8n8+Bu3zmfXzwWsgSMkTW8c4TXORdYDeu4E34AIrZqQmMNsd8SVjgcK7+vio1OfM9FyLkHqvhVC0Seu8LDQUh6qJg=="
 }
