@@ -9,6 +9,7 @@
   <script defer src="js/clipboard.js"></script>
   <script defer src="js/sync.js"></script>
   <script defer src="js/ui.js"></script>
+  <script defer src="js/files.js"></script>
   <script defer src="js/app.js"></script>
 </head>
 <body>
@@ -70,6 +71,22 @@
             <button id="clearHistoryBtn" class="icon-button" type="button" title="Verlauf leeren">Leeren</button>
           </div>
           <div id="history" class="history"></div>
+        </section>
+
+        <section class="panel">
+          <div class="section-head">
+            <h2>Datei</h2>
+            <button id="loadFileBtn" class="icon-button" type="button" title="Datei pruefen">Pruefen</button>
+          </div>
+          <label class="field">
+            <span>Datei auswaehlen</span>
+            <input id="fileInput" type="file">
+          </label>
+          <div class="actions">
+            <button id="sendFileBtn" class="button button--primary" type="button">Datei senden</button>
+            <button id="downloadFileBtn" class="button" type="button" disabled>Herunterladen</button>
+          </div>
+          <p id="fileInfo" class="meta">Noch keine Datei geladen.</p>
         </section>
 
         <section class="panel">

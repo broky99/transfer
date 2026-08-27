@@ -1,7 +1,16 @@
 (function () {
   function buildUrl(settings) {
     return "https://api.github.com/repos/" + encodeURIComponent(settings.owner) + "/" +
-      encodeURIComponent(settings.repo) + "/contents/" + settings.path;
+      encodeURIComponent(settings.repo) + "/contents/" + encodePath(settings.path);
+  }
+
+  function buildPathUrl(settings, path) {
+    return "https://api.github.com/repos/" + encodeURIComponent(settings.owner) + "/" +
+      encodeURIComponent(settings.repo) + "/contents/" + encodePath(path);
+  }
+
+  function encodePath(path) {
+    return String(path || "").split("/").map(encodeURIComponent).join("/");
   }
 
   function headers(settings) {
@@ -17,8 +26,12 @@
   }
 
   async function fetchFile(settings) {
+    return fetchPath(settings, settings.path);
+  }
+
+  async function fetchPath(settings, path) {
     var ref = encodeURIComponent(settings.branch || "main");
-    var response = await fetch(buildUrl(settings) + "?ref=" + ref + "&t=" + Date.now(), {
+    var response = await fetch(buildPathUrl(settings, path) + "?ref=" + ref + "&t=" + Date.now(), {
       headers: headers(settings),
       cache: "no-store"
     });
@@ -35,7 +48,11 @@
   }
 
   async function putFile(settings, contentObject, message) {
-    var current = await fetchFile(settings);
+    return putPath(settings, settings.path, contentObject, message);
+  }
+
+  async function putPath(settings, path, contentObject, message) {
+    var current = await fetchPath(settings, path);
     var body = {
       message: message,
       content: window.KISBridge.sync.toBase64(JSON.stringify(contentObject, null, 2)),
@@ -46,7 +63,7 @@
       body.sha = current.sha;
     }
 
-    var response = await fetch(buildUrl(settings), {
+    var response = await fetch(buildPathUrl(settings, path), {
       method: "PUT",
       headers: Object.assign({}, headers(settings), { "Content-Type": "application/json" }),
       body: JSON.stringify(body)
@@ -62,6 +79,8 @@
   window.KISBridge = window.KISBridge || {};
   window.KISBridge.github = {
     fetchFile: fetchFile,
-    putFile: putFile
+    putFile: putFile,
+    fetchPath: fetchPath,
+    putPath: putPath
   };
 })();
