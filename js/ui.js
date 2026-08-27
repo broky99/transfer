@@ -23,6 +23,20 @@
     get("statusDot").className = "status__dot" + (kind ? " is-" + kind : "");
   }
 
+  function normalizeSettings(input) {
+    var settings = {};
+    Object.keys(defaults).forEach(function (key) {
+      settings[key] = String((input && input[key]) || defaults[key] || "").trim();
+    });
+    return settings;
+  }
+
+  function saveSettings(settings) {
+    var normalized = normalizeSettings(settings);
+    localStorage.setItem("kisBridgeSettings", JSON.stringify(normalized));
+    return normalized;
+  }
+
   function loadSettings() {
     var saved = JSON.parse(localStorage.getItem("kisBridgeSettings") || "{}");
     return Object.assign({}, defaults, saved);
@@ -39,8 +53,7 @@
     Object.keys(defaults).forEach(function (key) {
       settings[key] = get(key).value.trim();
     });
-    localStorage.setItem("kisBridgeSettings", JSON.stringify(settings));
-    return settings;
+    return saveSettings(settings);
   }
 
   function readEditor() {
@@ -123,6 +136,7 @@
     get: get,
     setStatus: setStatus,
     loadSettings: loadSettings,
+    saveSettings: saveSettings,
     writeSettingsToForm: writeSettingsToForm,
     readSettingsFromForm: readSettingsFromForm,
     readEditor: readEditor,

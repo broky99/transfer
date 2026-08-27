@@ -9,6 +9,7 @@ KIS Bridge ist eine statische Webanwendung fuer den schnellen Transfer medizinis
 - Zwischenablage lesen und schreiben
 - Live-Aktualisierung mit Polling
 - Lokale Historie im Browser
+- Setup-Import fuer Rechner, die Browserdaten loeschen
 - Dark Mode, grosse Buttons, optimiert fuer Mobile und Desktop
 - Vorbereitete Struktur fuer Queue, PDF und Bilder
 
@@ -33,6 +34,19 @@ In der App unter **Einstellungen** diese Werte eintragen:
 - Passwort: gemeinsames lokales Passwort fuer iPhone und Klinik-PC
 
 Token und Passwort werden lokal im Browser gespeichert.
+
+## Setup-Script fuer Dienstrechner
+
+Wenn der Browser beim Neustart lokale Daten loescht, kann `setup/kis-bridge-setup.ps1` als lokaler Starter verwendet werden.
+
+1. Datei `setup/kis-bridge-setup.ps1` auf den Dienstrechner kopieren.
+2. In der lokalen Kopie `HIER_GITHUB_TOKEN_EINFUEGEN` durch den GitHub Token ersetzen.
+3. `HIER_PASSWORT_EINFUEGEN` durch das KIS-Bridge-Passwort ersetzen.
+4. Die Datei starten.
+
+Das Script oeffnet KIS Bridge mit einem `#setup=`-Link. Die App importiert Owner, Repo, Branch, Pfad, Token und Passwort, speichert sie im Browser und entfernt den Setup-Code wieder aus der Adresszeile.
+
+Wichtig: Der Token steht dann in dieser lokalen Scriptdatei. Die Datei nicht in GitHub hochladen, nicht per Mail verschicken und nur auf einem geschuetzten Dienstrechner speichern.
 
 ## GitHub Token
 
@@ -87,6 +101,8 @@ js/
   ui.js
 data/
 archive/
+setup/
+  kis-bridge-setup.ps1
 README.md
 ```
 
